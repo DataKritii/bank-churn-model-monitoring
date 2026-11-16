@@ -1,0 +1,6 @@
+metric,amber_above,red_above,why
+AUC drop vs development,0.03,0.05,Ranking quality: can the model still tell churners from stayers?
+Score PSI,0.1,0.25,Population drift: are we scoring a different customer mix than the model was built on?
+Calibration gap (absolute),0.03,0.05,Are predicted churn rates still close to actual churn?
+Top-decile precision drop,0.05,0.1,Campaign efficiency: are the customers we target still the ones who leave?
+Largest input-feature PSI,0.1,0.25,"Early warning: has any model input shifted, even before the score does?"

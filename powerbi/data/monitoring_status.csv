@@ -1,0 +1,61 @@
+month_id,check,check_order,value,status,status_rank
+1,AUC drop vs development,1,-0.0112,Green,1
+1,Score PSI,2,0.013,Green,1
+1,Calibration gap (absolute),3,-0.0007,Green,1
+1,Top-decile precision drop,4,-0.045,Green,1
+1,Largest input-feature PSI,5,0.0211,Green,1
+2,AUC drop vs development,1,-0.0058,Green,1
+2,Score PSI,2,0.0108,Green,1
+2,Calibration gap (absolute),3,-0.0122,Green,1
+2,Top-decile precision drop,4,-0.015,Green,1
+2,Largest input-feature PSI,5,0.021,Green,1
+3,AUC drop vs development,1,0.0162,Green,1
+3,Score PSI,2,0.015,Green,1
+3,Calibration gap (absolute),3,-0.0103,Green,1
+3,Top-decile precision drop,4,0.045,Green,1
+3,Largest input-feature PSI,5,0.0188,Green,1
+4,AUC drop vs development,1,0.021,Green,1
+4,Score PSI,2,0.0078,Green,1
+4,Calibration gap (absolute),3,0.0121,Green,1
+4,Top-decile precision drop,4,-0.045,Green,1
+4,Largest input-feature PSI,5,0.0276,Green,1
+5,AUC drop vs development,1,0.0026,Green,1
+5,Score PSI,2,0.0172,Green,1
+5,Calibration gap (absolute),3,-0.0189,Green,1
+5,Top-decile precision drop,4,0.015,Green,1
+5,Largest input-feature PSI,5,0.0224,Green,1
+6,AUC drop vs development,1,-0.009,Green,1
+6,Score PSI,2,0.0106,Green,1
+6,Calibration gap (absolute),3,-0.0092,Green,1
+6,Top-decile precision drop,4,0.045,Green,1
+6,Largest input-feature PSI,5,0.0167,Green,1
+7,AUC drop vs development,1,-0.0229,Green,1
+7,Score PSI,2,0.0382,Green,1
+7,Calibration gap (absolute),3,-0.0014,Green,1
+7,Top-decile precision drop,4,-0.045,Green,1
+7,Largest input-feature PSI,5,0.0246,Green,1
+8,AUC drop vs development,1,0.007,Green,1
+8,Score PSI,2,0.0482,Green,1
+8,Calibration gap (absolute),3,0.008,Green,1
+8,Top-decile precision drop,4,0.015,Green,1
+8,Largest input-feature PSI,5,0.066,Green,1
+9,AUC drop vs development,1,-0.0069,Green,1
+9,Score PSI,2,0.0754,Green,1
+9,Calibration gap (absolute),3,0.0128,Green,1
+9,Top-decile precision drop,4,-0.085,Green,1
+9,Largest input-feature PSI,5,0.1324,Amber,2
+10,AUC drop vs development,1,0.0519,Red,3
+10,Score PSI,2,0.0884,Green,1
+10,Calibration gap (absolute),3,0.0554,Red,3
+10,Top-decile precision drop,4,-0.065,Green,1
+10,Largest input-feature PSI,5,0.1876,Amber,2
+11,AUC drop vs development,1,0.042,Amber,2
+11,Score PSI,2,0.135,Amber,2
+11,Calibration gap (absolute),3,0.1009,Red,3
+11,Top-decile precision drop,4,-0.065,Green,1
+11,Largest input-feature PSI,5,0.1951,Amber,2
+12,AUC drop vs development,1,0.0625,Red,3
+12,Score PSI,2,0.1745,Amber,2
+12,Calibration gap (absolute),3,0.1351,Red,3
+12,Top-decile precision drop,4,-0.095,Green,1
+12,Largest input-feature PSI,5,0.2793,Red,3

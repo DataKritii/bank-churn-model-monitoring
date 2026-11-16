@@ -1,0 +1,208 @@
+// =====================================================================
+// DataKritii | Bank churn model monitoring: DAX measures
+// =====================================================================
+// How to use: in Power BI Desktop, create an empty table called _Measures
+// (Home > Enter data > name it _Measures > Load), select it, then for each
+// measure below: Home > New measure, paste ONE measure (name = expression),
+// press Enter, and set the format shown in the comment above it.
+//
+// Tables (from powerbi/data): months, monitoring_monthly, monitoring_status,
+//   feature_drift, fairness_monthly, scored_customers, thresholds, model_comparison
+// Relationships (all many-to-one, single direction):
+//   monitoring_monthly[month_id] -> months[month_id]
+//   monitoring_status[month_id]  -> months[month_id]
+//   feature_drift[month_id]      -> months[month_id]
+//   fairness_monthly[month_id]   -> months[month_id]
+//   scored_customers[month_id]   -> months[month_id]
+//   monitoring_status[check]     -> thresholds[metric]
+//   model_comparison has no relationships (a stand-alone reference table)
+//
+// Section 6 also needs three What-if parameters, created with
+// Modeling > New parameter > Numeric range (see the build guide, Part 4).
+// =====================================================================
+
+
+// ---------- 1. Volume ----------
+
+// Format: Whole number, thousands separator
+Customers = COUNTROWS ( scored_customers )
+
+
+// ---------- 2. Monthly monitoring metrics ----------
+// monitoring_monthly has ONE row per month, so AVERAGE simply returns that
+// month's value when one month is in context (a slicer, or months on an axis).
+
+// Format: Custom 0.000
+AUC = AVERAGE ( monitoring_monthly[auc] )
+
+// Format: Custom 0.000
+// The selected model's test-set AUC: the benchmark monitoring compares against
+Development AUC =
+CALCULATE ( MAX ( model_comparison[test_auc] ), model_comparison[selected] = TRUE () )
+
+// Format: Custom 0.000
+// Below this line the AUC check turns amber (development AUC minus the amber threshold)
+AUC Amber Line =
+[Development AUC]
+    - CALCULATE ( MAX ( thresholds[amber_above] ), thresholds[metric] = "AUC drop vs development" )
+
+// Format: Custom 0.000
+// Below this line the AUC check turns red
+AUC Red Line =
+[Development AUC]
+    - CALCULATE ( MAX ( thresholds[red_above] ), thresholds[metric] = "AUC drop vs development" )
+
+// Format: Percentage, 1 decimal
+Top-Decile Precision = AVERAGE ( monitoring_monthly[top_decile_precision] )
+
+// Format: Percentage, 1 decimal
+Development Top-Decile Precision =
+CALCULATE ( MAX ( model_comparison[test_top_decile_precision] ), model_comparison[selected] = TRUE () )
+
+// Format: Custom 0.000
+Score PSI = AVERAGE ( monitoring_monthly[score_psi] )
+
+// Format: Custom 0.000
+Largest Feature PSI = AVERAGE ( monitoring_monthly[max_feature_psi] )
+
+// Format: Custom 0.00
+// One cell of the feature-drift heatmap (feature x month)
+Feature PSI = AVERAGE ( feature_drift[psi] )
+
+
+// ---------- 3. Calibration, from the customer-level table ----------
+// These respond to ANY filter on scored_customers (country, risk band, ...),
+// so you can ask "where is the gap?" The monthly AUC and PSI cannot do that.
+
+// Format: Percentage, 1 decimal
+Avg Predicted Churn = AVERAGE ( scored_customers[churn_probability] )
+
+// Format: Percentage, 1 decimal
+Actual Churn Rate = AVERAGE ( scored_customers[churned] )
+
+// Format: Percentage, 1 decimal
+// Positive = more customers left than the model predicted (under-prediction)
+Calibration Gap = [Actual Churn Rate] - [Avg Predicted Churn]
+
+
+// ---------- 4. RAG status ----------
+// status_rank: 1 = Green, 2 = Amber, 3 = Red. MAX gives the WORST status in the
+// current context: one cell of the grid, a whole month (= overall status), or the year.
+
+// Format: Whole number
+Worst Status Rank = MAX ( monitoring_status[status_rank] )
+
+// Format: Text
+Status Label =
+SWITCH ( [Worst Status Rank], 3, "Red", 2, "Amber", 1, "Green", BLANK () )
+
+// Format: Text (used only for conditional formatting: Format style = Field value)
+Status Color =
+SWITCH ( [Worst Status Rank], 3, "#B9603A", 2, "#D4A20B", 1, "#2E7D5B", BLANK () )
+
+
+// ---------- 5. Fairness (weighted across months) ----------
+// fairness_monthly stores one row per month x group. To combine months correctly,
+// weight each month's rate by its number of customers (a plain AVERAGE would not).
+
+// Format: Whole number, thousands separator
+Group Customers = SUM ( fairness_monthly[customers] )
+
+// Format: Percentage, 1 decimal
+Group Avg Predicted =
+DIVIDE (
+    SUMX ( fairness_monthly, fairness_monthly[customers] * fairness_monthly[avg_predicted] ),
+    [Group Customers]
+)
+
+// Format: Percentage, 1 decimal
+Group Actual Churn =
+DIVIDE (
+    SUMX ( fairness_monthly, fairness_monthly[customers] * fairness_monthly[actual_churn] ),
+    [Group Customers]
+)
+
+// Format: Percentage, 1 decimal
+// Positive = the model under-predicts churn for this group
+Group Calibration Gap = [Group Actual Churn] - [Group Avg Predicted]
+
+// Format: Percentage, 1 decimal
+// Share of the group in the top 10% of scores (the customers a campaign would call first)
+Group Flag Rate =
+DIVIDE (
+    SUMX ( fairness_monthly, fairness_monthly[customers] * fairness_monthly[flagged_share] ),
+    [Group Customers]
+)
+
+
+// ---------- 6. Retention what-if ----------
+// Created automatically by Modeling > New parameter (do NOT paste these):
+//   Offer Cost Value     = SELECTEDVALUE ( 'Offer Cost'[Offer Cost], 25 )
+//   Success Rate Value   = SELECTEDVALUE ( 'Success Rate'[Success Rate], 0.3 )
+//   Customer Value Value = SELECTEDVALUE ( 'Customer Value'[Customer Value], 500 )
+//
+// Expected value of contacting one customer = p x success rate x value - cost.
+// It is positive when p > cost / (success rate x value): the break-even probability.
+
+// Format: Percentage, 1 decimal
+Break-even Probability =
+DIVIDE ( [Offer Cost Value], [Success Rate Value] * [Customer Value Value] )
+
+// Format: Whole number, thousands separator
+Customers to Contact =
+VAR BreakEven = [Break-even Probability]
+RETURN
+    COUNTROWS ( FILTER ( scored_customers, scored_customers[churn_probability] > BreakEven ) ) + 0
+
+// Format: Percentage, 1 decimal
+Share Contacted = DIVIDE ( [Customers to Contact], [Customers] )
+
+// Format: Percentage, 1 decimal
+// Of the customers who actually left, the share the campaign would have reached
+Churners Caught =
+VAR BreakEven = [Break-even Probability]
+RETURN
+    DIVIDE (
+        COUNTROWS ( FILTER ( scored_customers,
+            scored_customers[churn_probability] > BreakEven && scored_customers[churned] = 1 ) ),
+        CALCULATE ( COUNTROWS ( scored_customers ), scored_customers[churned] = 1 )
+    )
+
+// Format: Custom €#,0;-€#,0
+// What the model's probabilities say the campaign is worth (what you'd budget with)
+Expected Campaign Value =
+VAR BreakEven = [Break-even Probability]
+VAR Success = [Success Rate Value]
+VAR CustomerValue = [Customer Value Value]
+VAR Cost = [Offer Cost Value]
+RETURN
+    SUMX (
+        FILTER ( scored_customers, scored_customers[churn_probability] > BreakEven ),
+        scored_customers[churn_probability] * Success * CustomerValue - Cost
+    )
+
+// Format: Custom €#,0;-€#,0
+// The same campaign valued with what actually happened (churned = 1 or 0)
+Realised Campaign Value =
+VAR BreakEven = [Break-even Probability]
+VAR Success = [Success Rate Value]
+VAR CustomerValue = [Customer Value Value]
+VAR Cost = [Offer Cost Value]
+RETURN
+    SUMX (
+        FILTER ( scored_customers, scored_customers[churn_probability] > BreakEven ),
+        scored_customers[churned] * Success * CustomerValue - Cost
+    )
+
+// Format: Custom €#,0;-€#,0
+// The no-model alternative: contact every customer
+Value if Contact Everyone =
+VAR Success = [Success Rate Value]
+VAR CustomerValue = [Customer Value Value]
+VAR Cost = [Offer Cost Value]
+RETURN
+    SUMX ( scored_customers, scored_customers[churned] * Success * CustomerValue - Cost )
+
+// Format: Custom €#,0;-€#,0
+// Positive = targeting with the model beats contacting everyone
+Model Advantage = [Realised Campaign Value] - [Value if Contact Everyone]
