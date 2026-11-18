@@ -93,7 +93,7 @@ The model is a **star schema**: `months` is the shared date dimension, so one mo
 
 ## Part 3: Apply the theme and set up pages
 
-1. **View → Themes → Browse for themes** → select `DataKritii_theme.json`. Pages get the ivory background and visuals get white cards.
+1. **Design → Import theme** (in older versions: **View → Themes → Browse for themes**) → select `DataKritii_theme.json`. Pages get the ivory background and visuals get white cards.
 2. Rename **Page 1** to `Model health`, and add five more pages: `Performance`, `Drift`, `Fairness`, `Retention planner`, `Model card`.
 3. Keep the default page size (16:9).
 
